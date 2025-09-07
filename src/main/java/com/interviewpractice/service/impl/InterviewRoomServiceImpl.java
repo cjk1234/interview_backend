@@ -9,10 +9,10 @@ import com.interviewpractice.entity.User;
 import com.interviewpractice.mapper.InterviewRoomMapper;
 import com.interviewpractice.mapper.RoomParticipantMapper;
 import com.interviewpractice.service.InterviewRoomService;
+import com.interviewpractice.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -41,18 +41,18 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
 
     @Override
     @Transactional
-    public InterviewRoom joinRoom(Long roomId, User user) {
+    public ApiResponse<InterviewRoom> joinRoom(Long roomId, User user) {
         InterviewRoom room = getById(roomId);
         if (room == null) {
-            throw new RuntimeException("房间不存在");
+            return ApiResponse.error("房间不存在", "ROOM_NOT_FOUND");
         }
 
         if (!"WAITING".equals(room.getStatus())) {
-            throw new RuntimeException("房间开始或已结束");
+            return ApiResponse.error("房间开始或已结束", "ROOM_NOT_AVAILABLE");
         }
 
         if (room.getCurrentParticipants() >= room.getMaxParticipants()) {
-            throw new RuntimeException("房间已满");
+            return ApiResponse.error("房间已满", "ROOM_FULL");
         }
 
         // 检查用户是否已在房间中
@@ -62,11 +62,11 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
                         .eq("user_id", user.getId())
                         //扫描已加入但未离开的用户数据
                         .isNull("left_at")
-                        .isNotNull("join_at")
+                        .isNotNull("joined_at")
         );
 
         if (count > 0) {
-            throw new RuntimeException("用户已在房间中");
+            return ApiResponse.error("用户已在房间中", "ALREADY_JOINED");
         }
 
         RoomParticipant participant = new RoomParticipant();
@@ -80,7 +80,7 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         room.setCurrentParticipants(room.getCurrentParticipants() + 1);
         updateById(room);
 
-        return room;
+        return ApiResponse.success(room);
     }
 
     @Override

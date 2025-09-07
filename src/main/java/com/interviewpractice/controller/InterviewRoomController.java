@@ -4,6 +4,7 @@ import com.interviewpractice.entity.InterviewRoom;
 import com.interviewpractice.entity.User;
 import com.interviewpractice.service.InterviewRoomService;
 import com.interviewpractice.service.UserService;
+import com.interviewpractice.utils.ApiResponse;
 import com.interviewpractice.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,13 @@ public class InterviewRoomController {
         User user = userService.getUserInfo(userId);
 
         return roomService.createRoom(topic, description, maxParticipants);
+    }
+
+    @PostMapping("/{roomId}/join")
+    public ApiResponse<InterviewRoom> joinRoom(@PathVariable Long roomId, HttpServletRequest request) {
+        Long userId = getUserIdFromRequest(request);
+        User user = userService.getUserInfo(userId);
+        return roomService.joinRoom(roomId, user);
     }
 
     @PostMapping("/{roomId}/leave")

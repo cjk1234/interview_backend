@@ -3,12 +3,13 @@ package com.interviewpractice.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.interviewpractice.entity.InterviewRoom;
 import com.interviewpractice.entity.User;
+import com.interviewpractice.utils.ApiResponse;
 
 import java.util.List;
 
 public interface InterviewRoomService extends IService<InterviewRoom> {
     InterviewRoom createRoom(String topic, String description, Integer maxParticipants);
-    InterviewRoom joinRoom(Long roomId, User user);
+    ApiResponse<InterviewRoom> joinRoom(Long roomId, User user);
     void leaveRoom(Long roomId, Long userId);
     List<InterviewRoom> getAvailableRooms();
     InterviewRoom getRoomDetail(Long roomId);
