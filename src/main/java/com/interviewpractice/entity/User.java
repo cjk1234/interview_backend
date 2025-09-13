@@ -20,6 +20,8 @@ public class User {
     private String grade;
     private String resumeUrl;
 
+    private boolean alreadyJoined;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 

@@ -46,7 +46,8 @@ public class InterviewRoomController {
     @PostMapping("/{roomId}/leave")
     public void leaveRoom(@PathVariable Long roomId, HttpServletRequest request) {
         Long userId = getUserIdFromRequest(request);
-        roomService.leaveRoom(roomId, userId);
+        User user = userService.getUserInfo(userId);
+        roomService.leaveRoom(roomId, user);
     }
 
     @GetMapping("/available")

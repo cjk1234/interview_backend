@@ -10,7 +10,7 @@ import java.util.List;
 public interface InterviewRoomService extends IService<InterviewRoom> {
     InterviewRoom createRoom(String topic, String description, Integer maxParticipants);
     ApiResponse<InterviewRoom> joinRoom(Long roomId, User user);
-    void leaveRoom(Long roomId, Long userId);
+    void leaveRoom(Long roomId, User user);
     List<InterviewRoom> getAvailableRooms();
     InterviewRoom getRoomDetail(Long roomId);
     void startRoom(Long roomId);

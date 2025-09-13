@@ -1,26 +1,28 @@
 package com.interviewpractice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.interviewpractice.entity.InterviewRoom;
 import com.interviewpractice.entity.RoomParticipant;
 import com.interviewpractice.entity.User;
 import com.interviewpractice.mapper.InterviewRoomMapper;
 import com.interviewpractice.mapper.RoomParticipantMapper;
+import com.interviewpractice.mapper.UserMapper;
 import com.interviewpractice.service.InterviewRoomService;
 import com.interviewpractice.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
 @Service
 public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, InterviewRoom> implements InterviewRoomService {
     @Autowired
     private RoomParticipantMapper roomParticipantMapper;
+
+    @Autowired
+    private UserMapper userMapper;
 
 
     @Override
@@ -55,7 +57,7 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             return ApiResponse.error("房间已满", "ROOM_FULL");
         }
 
-        // 检查用户是否已在房间中
+        // 检查用户是否已在当前房间中
         Long count = roomParticipantMapper.selectCount(
                 new QueryWrapper<RoomParticipant>()
                         .eq("room_id", roomId)
@@ -66,9 +68,12 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         );
 
         if (count > 0) {
-            return ApiResponse.error("用户已在房间中", "ALREADY_JOINED");
+            return ApiResponse.error("用户已在当前房间中", "ALREADY_JOINED_IN_IT");
         }
 
+        if (user.isAlreadyJoined()) {
+            return ApiResponse.error("用户已在其他房间中", "ALREADY_JOINED");
+        }
         RoomParticipant participant = new RoomParticipant();
         participant.setRoomId(roomId);
         participant.setUserId(user.getId());
@@ -79,13 +84,15 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         // 更新房间人数
         room.setCurrentParticipants(room.getCurrentParticipants() + 1);
         updateById(room);
+        user.setAlreadyJoined(true);
+        userMapper.updateById(user);
 
         return ApiResponse.success(room);
     }
 
     @Override
     @Transactional
-    public void leaveRoom(Long roomId, Long userId) {
+    public void leaveRoom(Long roomId, User user) {
         InterviewRoom room = getById(roomId);
         if (room == null) {
             throw new RuntimeException("房间不存在");
@@ -95,10 +102,11 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         RoomParticipant participant = roomParticipantMapper.selectOne(
                new QueryWrapper<RoomParticipant>()
                        .eq("room_id", roomId)
-                       .eq("user_id", userId)
+                       .eq("user_id", user.getId())
                        .isNull("left_at")
         );
-
+        user.setAlreadyJoined(false);
+        userMapper.updateById(user);
         if (participant != null) {
             participant.setLeftAt(LocalDateTime.now());
             roomParticipantMapper.updateById(participant);
