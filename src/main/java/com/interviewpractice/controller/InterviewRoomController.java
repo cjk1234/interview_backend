@@ -1,6 +1,7 @@
 package com.interviewpractice.controller;
 
 import com.interviewpractice.entity.InterviewRoom;
+import com.interviewpractice.entity.RoomParticipant;
 import com.interviewpractice.entity.User;
 import com.interviewpractice.service.InterviewRoomService;
 import com.interviewpractice.service.UserService;
@@ -36,6 +37,11 @@ public class InterviewRoomController {
         return roomService.createRoom(topic, description, maxParticipants);
     }
 
+    @GetMapping("/{roomId}")
+    public InterviewRoom getRoomDetail(@PathVariable Long roomId) {
+        return roomService.getRoomDetail(roomId);
+    }
+
     @PostMapping("/{roomId}/join")
     public ApiResponse<InterviewRoom> joinRoom(@PathVariable Long roomId, HttpServletRequest request) {
         Long userId = getUserIdFromRequest(request);
@@ -48,6 +54,11 @@ public class InterviewRoomController {
         Long userId = getUserIdFromRequest(request);
         User user = userService.getUserInfo(userId);
         roomService.leaveRoom(roomId, user);
+    }
+
+    @GetMapping("/{roomId}/getRoomParticipants")
+    public List<RoomParticipant> getRoomParticipants(@PathVariable Long roomId) {
+        return roomService.getRoomParticipants(roomId);
     }
 
     @GetMapping("/available")

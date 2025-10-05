@@ -15,8 +15,9 @@ public class RoomParticipant {
     private Long userId;
     private String role; // LEADER, MEMBER, OBSERVER
 
-    @TableField(fill = FieldFill.INSERT)
+    @TableField("joined_at")
     private LocalDateTime joinedAt;
 
+    @TableField(value = "left_at", updateStrategy = FieldStrategy.ALWAYS)
     private LocalDateTime leftAt;
 }

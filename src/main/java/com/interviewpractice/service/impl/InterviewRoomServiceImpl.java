@@ -1,5 +1,6 @@
 package com.interviewpractice.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.interviewpractice.entity.InterviewRoom;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -74,13 +76,27 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         if (user.isAlreadyJoined()) {
             return ApiResponse.error("用户已在其他房间中", "ALREADY_JOINED");
         }
-        RoomParticipant participant = new RoomParticipant();
-        participant.setRoomId(roomId);
-        participant.setUserId(user.getId());
-        participant.setRole("MEMBER");
-        participant.setJoinedAt(LocalDateTime.now());
-        roomParticipantMapper.insert(participant);
 
+        // 查询用户是否在当前房间有历史记录
+        RoomParticipant existingParticipant = roomParticipantMapper.selectOne(
+                new QueryWrapper<RoomParticipant>()
+                        .eq("room_id", roomId)
+                        .eq("user_id", user.getId())
+                        .isNotNull("left_at")
+        );
+
+        if (existingParticipant != null) {
+            existingParticipant.setJoinedAt(LocalDateTime.now());
+            existingParticipant.setLeftAt(null);
+            roomParticipantMapper.updateById(existingParticipant);
+        } else {
+            RoomParticipant participant = new RoomParticipant();
+            participant.setRoomId(roomId);
+            participant.setUserId(user.getId());
+            participant.setRole("MEMBER");
+            participant.setJoinedAt(LocalDateTime.now());
+            roomParticipantMapper.insert(participant);
+        }
         // 更新房间人数
         room.setCurrentParticipants(room.getCurrentParticipants() + 1);
         updateById(room);
@@ -125,6 +141,16 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
 //                Wrappers.<InterviewRoom>query().getEntity() 返回 null，导致 getMaxParticipants() 抛出 NullPointerException。
                 .apply("current_participants < max_participants")
                 .list();
+    }
+
+    @Override
+    public List<RoomParticipant> getRoomParticipants(Long roomId) {
+        return roomParticipantMapper.selectList(
+                new LambdaQueryWrapper<RoomParticipant>()
+                        .eq(RoomParticipant::getRoomId, roomId)
+                        .isNull(RoomParticipant::getLeftAt)
+                        .orderByAsc(RoomParticipant::getJoinedAt)
+        );
     }
 
     @Override
