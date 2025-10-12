@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -93,6 +92,7 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             RoomParticipant participant = new RoomParticipant();
             participant.setRoomId(roomId);
             participant.setUserId(user.getId());
+            participant.setUserName(user.getUsername());
             participant.setRole("MEMBER");
             participant.setJoinedAt(LocalDateTime.now());
             roomParticipantMapper.insert(participant);

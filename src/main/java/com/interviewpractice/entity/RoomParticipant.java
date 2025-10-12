@@ -13,6 +13,7 @@ public class RoomParticipant {
 
     private Long roomId;
     private Long userId;
+    private String userName;
     private String role; // LEADER, MEMBER, OBSERVER
 
     @TableField("joined_at")
