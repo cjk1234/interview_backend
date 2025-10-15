@@ -12,6 +12,7 @@ import com.interviewpractice.mapper.UserMapper;
 import com.interviewpractice.service.InterviewRoomService;
 import com.interviewpractice.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -25,6 +26,8 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @Override
     public InterviewRoom createRoom(String topic, String description, Integer maxParticipants) {
@@ -84,17 +87,18 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
                         .isNotNull("left_at")
         );
 
+        RoomParticipant participant = new RoomParticipant();
+        participant.setRoomId(roomId);
+        participant.setUserId(user.getId());
+        participant.setUserName(user.getUsername());
+        participant.setRole("MEMBER");
+        participant.setJoinedAt(LocalDateTime.now());
+
         if (existingParticipant != null) {
             existingParticipant.setJoinedAt(LocalDateTime.now());
             existingParticipant.setLeftAt(null);
             roomParticipantMapper.updateById(existingParticipant);
         } else {
-            RoomParticipant participant = new RoomParticipant();
-            participant.setRoomId(roomId);
-            participant.setUserId(user.getId());
-            participant.setUserName(user.getUsername());
-            participant.setRole("MEMBER");
-            participant.setJoinedAt(LocalDateTime.now());
             roomParticipantMapper.insert(participant);
         }
         // 更新房间人数
@@ -103,6 +107,8 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         user.setAlreadyJoined(true);
         userMapper.updateById(user);
 
+        // 发送用户加入通知
+        messagingTemplate.convertAndSend("/topic/userJoin/" + roomId, participant);
         return ApiResponse.success(room);
     }
 
@@ -130,6 +136,9 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             // 更新房间人数
             room.setCurrentParticipants(room.getCurrentParticipants() - 1);
             updateById(room);
+
+            // 发送用户离开通知
+            messagingTemplate.convertAndSend("/topic/userLeave/" + roomId, participant);
         }
     }
 
