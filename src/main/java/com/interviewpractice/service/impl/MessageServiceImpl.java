@@ -1,29 +1,27 @@
 package com.interviewpractice.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.interviewpractice.dto.MessageDTO;
 import com.interviewpractice.entity.Message;
 import com.interviewpractice.mapper.MessageMapper;
 import com.interviewpractice.service.MessageService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
 @Service
 public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> implements MessageService {
 
     @Override
-    public Message sendMessage(Long roomId, Long userId, String content, String messageType) {
+    public void sendMessage(MessageDTO messageDTO) {
         Message message = new Message();
-        message.setRoomId(roomId);
-        message.setUserId(userId);
-        message.setContent(content);
-        message.setMessageType(messageType != null ? messageType : "TEXT");
+        message.setRoomId(messageDTO.getRoomId());
+        message.setUserId(messageDTO.getUserId());
+        message.setContent(messageDTO.getContent());
+        message.setMessageType(messageDTO.getMessageType() != null ? messageDTO.getMessageType() : "TEXT");
         message.setCreatedAt(LocalDateTime.now());
-
         save(message);
-        return message;
     }
 
     @Override
