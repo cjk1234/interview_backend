@@ -21,8 +21,6 @@ public class sendMessageController {
      */
     @MessageMapping("/chat/{roomId}")
     public void sendMessage(@RequestBody MessageDTO messageDTO) {
-        System.out.println("收到聊天消息: " + messageDTO.getContent());
-
         // 广播消息给房间内所有用户
         messagingTemplate.convertAndSend("/topic/message/" + messageDTO.getRoomId(), messageDTO);
         messageService.sendMessage(messageDTO);
