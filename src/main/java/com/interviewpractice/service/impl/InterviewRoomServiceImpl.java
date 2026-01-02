@@ -16,7 +16,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, InterviewRoom> implements InterviewRoomService {
@@ -30,7 +32,7 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
     private SimpMessagingTemplate messagingTemplate;
 
     @Override
-    public InterviewRoom createRoom(String topic, String description, Integer maxParticipants) {
+    public InterviewRoom createRoom(Long userId, String topic, String description, Integer maxParticipants) {
         InterviewRoom room = new InterviewRoom();
         room.setTopic(topic);
         room.setDescription(description);
@@ -38,6 +40,7 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         room.setCurrentParticipants(0);
         room.setStatus("WAITING");
         room.setCreatedAt(LocalDateTime.now());
+        room.setCreatorId(userId);
 
         //save(T entity) 方法是用于保存单个实体对象到数据库的核心方法
         save(room);
@@ -174,6 +177,13 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             room.setStatus("ONGOING");
             room.setStartedAt(LocalDateTime.now());
             updateById(room);
+
+            Map<String, Object> statusMessage = new HashMap<>();
+            statusMessage.put("roomId", roomId);
+            statusMessage.put("status", "ONGOING");
+            statusMessage.put("startedAt", room.getStartedAt());
+
+            messagingTemplate.convertAndSend("/topic/room/" + roomId + "/status", statusMessage);
         }
     }
 
@@ -184,6 +194,14 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             room.setStatus("COMPLETED");
             room.setEndedAt(LocalDateTime.now());
             updateById(room);
+
+            Map<String, Object> statusMessage = new HashMap<>();
+            statusMessage.put("roomId", roomId);
+            statusMessage.put("status", "COMPLETED");
+            statusMessage.put("endedAt", room.getEndedAt());
+
+            // 广播到房间的所有订阅者
+            messagingTemplate.convertAndSend("/topic/room/" + roomId + "/status", statusMessage);
         }
     }
 }

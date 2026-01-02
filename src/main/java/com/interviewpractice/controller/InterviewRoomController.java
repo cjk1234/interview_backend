@@ -32,9 +32,7 @@ public class InterviewRoomController {
                                     @RequestParam(required = false) Integer maxParticipants,
                                     HttpServletRequest request) {
         Long userId = getUserIdFromRequest(request);
-        User user = userService.getUserInfo(userId);
-
-        return roomService.createRoom(topic, description, maxParticipants);
+        return roomService.createRoom(userId, topic, description, maxParticipants);
     }
 
     @GetMapping("/{roomId}")

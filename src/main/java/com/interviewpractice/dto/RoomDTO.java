@@ -15,6 +15,7 @@ public class RoomDTO {
     private LocalDateTime createdAt;
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
+    private Long creatorId;
     private List<ParticipantDTO> participants;
 }
 

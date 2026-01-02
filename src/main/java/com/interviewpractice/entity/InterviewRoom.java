@@ -22,4 +22,5 @@ public class InterviewRoom {
 
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
+    private Long creatorId;
 }
