@@ -148,7 +148,7 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
     @Override
     public List<InterviewRoom> getAvailableRooms() {
         return lambdaQuery()
-                .eq(InterviewRoom::getStatus, "WAITING")
+//                .eq(InterviewRoom::getStatus, "WAITING")
 //                .lt(InterviewRoom::getCurrentParticipants, com.baomidou.mybatisplus.core.toolkit.Wrappers.<InterviewRoom>query().getEntity().getMaxParticipants())
 //                Wrappers.<InterviewRoom>query().getEntity() 返回 null，导致 getMaxParticipants() 抛出 NullPointerException。
                 .apply("current_participants < max_participants")
