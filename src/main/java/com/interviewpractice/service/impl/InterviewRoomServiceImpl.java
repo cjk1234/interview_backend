@@ -45,6 +45,14 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         //save(T entity) 方法是用于保存单个实体对象到数据库的核心方法
         save(room);
 
+        Map<String, Object> createMessage = new HashMap<>();
+        createMessage.put("eventType", "ROOM_CREATED");
+        createMessage.put("room", room); // 发送整个房间对象
+        createMessage.put("action", "ROOM_CREATED");
+        createMessage.put("timestamp", LocalDateTime.now().toString());
+
+        messagingTemplate.convertAndSend("/topic/room-list/update", createMessage);
+
         return room;
     }
 
@@ -112,6 +120,18 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
 
         // 发送用户加入通知
         messagingTemplate.convertAndSend("/topic/userJoin/" + roomId, participant);
+
+        Map<String, Object> roomUpdateMessage = new HashMap<>();
+        roomUpdateMessage.put("eventType", "ROOM_UPDATED");
+        roomUpdateMessage.put("roomId", roomId);
+        roomUpdateMessage.put("currentParticipants", room.getCurrentParticipants());
+        roomUpdateMessage.put("maxParticipants", room.getMaxParticipants());
+        roomUpdateMessage.put("status", room.getStatus());
+        roomUpdateMessage.put("action", "USER_JOINED");
+
+        // 广播到所有监听房间列表的客户端
+        messagingTemplate.convertAndSend("/topic/room-list/update", roomUpdateMessage);
+
         return ApiResponse.success(room);
     }
 
@@ -142,6 +162,16 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
 
             // 发送用户离开通知
             messagingTemplate.convertAndSend("/topic/userLeave/" + roomId, participant);
+
+            Map<String, Object> roomUpdateMessage = new HashMap<>();
+            roomUpdateMessage.put("eventType", "ROOM_UPDATED");
+            roomUpdateMessage.put("roomId", roomId);
+            roomUpdateMessage.put("currentParticipants", room.getCurrentParticipants());
+            roomUpdateMessage.put("maxParticipants", room.getMaxParticipants());
+            roomUpdateMessage.put("status", room.getStatus());
+            roomUpdateMessage.put("action", "USER_LEFT");
+
+            messagingTemplate.convertAndSend("/topic/room-list/update", roomUpdateMessage);
         }
     }
 
@@ -179,11 +209,13 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             updateById(room);
 
             Map<String, Object> statusMessage = new HashMap<>();
+            statusMessage.put("action", "ROOM_STARTED");
             statusMessage.put("roomId", roomId);
             statusMessage.put("status", "ONGOING");
             statusMessage.put("startedAt", room.getStartedAt());
 
             messagingTemplate.convertAndSend("/topic/room/" + roomId + "/status", statusMessage);
+            messagingTemplate.convertAndSend("/topic/room-list/update", statusMessage);
         }
     }
 
@@ -196,12 +228,14 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             updateById(room);
 
             Map<String, Object> statusMessage = new HashMap<>();
+            statusMessage.put("action", "ROOM_COMPLETED");
             statusMessage.put("roomId", roomId);
             statusMessage.put("status", "COMPLETED");
             statusMessage.put("endedAt", room.getEndedAt());
 
             // 广播到房间的所有订阅者
             messagingTemplate.convertAndSend("/topic/room/" + roomId + "/status", statusMessage);
+            messagingTemplate.convertAndSend("/topic/room-list/update", statusMessage);
         }
     }
 }
