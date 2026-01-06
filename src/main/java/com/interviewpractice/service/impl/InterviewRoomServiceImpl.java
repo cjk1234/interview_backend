@@ -155,9 +155,9 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         if (participant != null) {
             participant.setLeftAt(LocalDateTime.now());
             roomParticipantMapper.updateById(participant);
-
-            // 更新房间人数
             room.setCurrentParticipants(room.getCurrentParticipants() - 1);
+            // 当房间空无一人，房间状态自动变为“WAITING”
+            if (room.getCurrentParticipants() == 0) room.setStatus("WAITING");
             updateById(room);
 
             // 发送用户离开通知
