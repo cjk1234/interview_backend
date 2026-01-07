@@ -19,11 +19,15 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, InterviewRoom> implements InterviewRoomService {
     @Autowired
     private RoomParticipantMapper roomParticipantMapper;
+
+    @Autowired
+    private InterviewRoomMapper interviewRoomMapper;
 
     @Autowired
     private UserMapper userMapper;
@@ -54,6 +58,21 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         messagingTemplate.convertAndSend("/topic/room-list/update", createMessage);
 
         return room;
+    }
+
+    @Override
+    public void deleteRoom(Long userId, Long roomId) {
+        InterviewRoom room = getById(roomId);
+        if (Objects.equals(room.getCreatorId(), userId)) interviewRoomMapper.deleteById(roomId);
+        else System.err.println("Only creator can delete this room");
+
+        Map<String, Object> createMessage = new HashMap<>();
+        createMessage.put("eventType", "ROOM_DELETED");
+        createMessage.put("roomId", roomId);
+        createMessage.put("action", "ROOM_DELETED");
+        createMessage.put("timestamp", LocalDateTime.now().toString());
+
+        messagingTemplate.convertAndSend("/topic/room-list/update", createMessage);
     }
 
     @Override

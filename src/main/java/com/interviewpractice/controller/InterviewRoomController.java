@@ -35,6 +35,12 @@ public class InterviewRoomController {
         return roomService.createRoom(userId, topic, description, maxParticipants);
     }
 
+    @DeleteMapping("/{roomId}/delete")
+    public void deleteRoom(@PathVariable Long roomId, HttpServletRequest request) {
+        Long userId = getUserIdFromRequest(request);
+        roomService.deleteRoom(userId, roomId);
+    }
+
     @GetMapping("/{roomId}")
     public InterviewRoom getRoomDetail(@PathVariable Long roomId) {
         return roomService.getRoomDetail(roomId);
