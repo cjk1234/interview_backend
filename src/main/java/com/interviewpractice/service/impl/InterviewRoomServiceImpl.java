@@ -52,7 +52,6 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         Map<String, Object> createMessage = new HashMap<>();
         createMessage.put("eventType", "ROOM_CREATED");
         createMessage.put("room", room); // 发送整个房间对象
-        createMessage.put("action", "ROOM_CREATED");
         createMessage.put("timestamp", LocalDateTime.now().toString());
 
         messagingTemplate.convertAndSend("/topic/room-list/update", createMessage);
@@ -69,7 +68,6 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         Map<String, Object> createMessage = new HashMap<>();
         createMessage.put("eventType", "ROOM_DELETED");
         createMessage.put("roomId", roomId);
-        createMessage.put("action", "ROOM_DELETED");
         createMessage.put("timestamp", LocalDateTime.now().toString());
 
         messagingTemplate.convertAndSend("/topic/room-list/update", createMessage);
@@ -142,11 +140,10 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
 
         Map<String, Object> roomUpdateMessage = new HashMap<>();
         roomUpdateMessage.put("eventType", "ROOM_UPDATED");
-        roomUpdateMessage.put("roomId", roomId);
-        roomUpdateMessage.put("currentParticipants", room.getCurrentParticipants());
-        roomUpdateMessage.put("maxParticipants", room.getMaxParticipants());
-        roomUpdateMessage.put("status", room.getStatus());
-        roomUpdateMessage.put("action", "USER_JOINED");
+//        roomUpdateMessage.put("roomId", roomId);
+//        roomUpdateMessage.put("currentParticipants", room.getCurrentParticipants());
+//        roomUpdateMessage.put("status", room.getStatus());
+        roomUpdateMessage.put("room", room);
 
         // 广播到所有监听房间列表的客户端
         messagingTemplate.convertAndSend("/topic/room-list/update", roomUpdateMessage);
@@ -184,11 +181,7 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
 
             Map<String, Object> roomUpdateMessage = new HashMap<>();
             roomUpdateMessage.put("eventType", "ROOM_UPDATED");
-            roomUpdateMessage.put("roomId", roomId);
-            roomUpdateMessage.put("currentParticipants", room.getCurrentParticipants());
-            roomUpdateMessage.put("maxParticipants", room.getMaxParticipants());
-            roomUpdateMessage.put("status", room.getStatus());
-            roomUpdateMessage.put("action", "USER_LEFT");
+            roomUpdateMessage.put("room", room);
 
             messagingTemplate.convertAndSend("/topic/room-list/update", roomUpdateMessage);
         }
@@ -228,10 +221,11 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             updateById(room);
 
             Map<String, Object> statusMessage = new HashMap<>();
-            statusMessage.put("action", "ROOM_STARTED");
-            statusMessage.put("roomId", roomId);
-            statusMessage.put("status", "ONGOING");
-            statusMessage.put("startedAt", room.getStartedAt());
+//            statusMessage.put("roomId", roomId);
+//            statusMessage.put("status", "ONGOING");
+//            statusMessage.put("startedAt", room.getStartedAt());
+            statusMessage.put("eventType", "ROOM_UPDATED");
+            statusMessage.put("room", room);
 
             messagingTemplate.convertAndSend("/topic/room/" + roomId + "/status", statusMessage);
             messagingTemplate.convertAndSend("/topic/room-list/update", statusMessage);
@@ -247,10 +241,11 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             updateById(room);
 
             Map<String, Object> statusMessage = new HashMap<>();
-            statusMessage.put("action", "ROOM_COMPLETED");
-            statusMessage.put("roomId", roomId);
-            statusMessage.put("status", "COMPLETED");
-            statusMessage.put("endedAt", room.getEndedAt());
+//            statusMessage.put("roomId", roomId);
+//            statusMessage.put("status", "COMPLETED");
+//            statusMessage.put("endedAt", room.getEndedAt());
+            statusMessage.put("eventType", "ROOM_UPDATED");
+            statusMessage.put("room", room);
 
             // 广播到房间的所有订阅者
             messagingTemplate.convertAndSend("/topic/room/" + roomId + "/status", statusMessage);
