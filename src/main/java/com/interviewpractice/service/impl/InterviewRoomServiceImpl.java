@@ -52,7 +52,6 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         Map<String, Object> createMessage = new HashMap<>();
         createMessage.put("eventType", "ROOM_CREATED");
         createMessage.put("room", room); // 发送整个房间对象
-        createMessage.put("timestamp", LocalDateTime.now().toString());
 
         messagingTemplate.convertAndSend("/topic/room-list/update", createMessage);
 
@@ -65,12 +64,11 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
         if (Objects.equals(room.getCreatorId(), userId)) interviewRoomMapper.deleteById(roomId);
         else System.err.println("Only creator can delete this room");
 
-        Map<String, Object> createMessage = new HashMap<>();
-        createMessage.put("eventType", "ROOM_DELETED");
-        createMessage.put("roomId", roomId);
-        createMessage.put("timestamp", LocalDateTime.now().toString());
+        Map<String, Object> deleteMessage = new HashMap<>();
+        deleteMessage.put("eventType", "ROOM_DELETED");
+        deleteMessage.put("room", room);
 
-        messagingTemplate.convertAndSend("/topic/room-list/update", createMessage);
+        messagingTemplate.convertAndSend("/topic/room-list/update", deleteMessage);
     }
 
     @Override
@@ -140,9 +138,6 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
 
         Map<String, Object> roomUpdateMessage = new HashMap<>();
         roomUpdateMessage.put("eventType", "ROOM_UPDATED");
-//        roomUpdateMessage.put("roomId", roomId);
-//        roomUpdateMessage.put("currentParticipants", room.getCurrentParticipants());
-//        roomUpdateMessage.put("status", room.getStatus());
         roomUpdateMessage.put("room", room);
 
         // 广播到所有监听房间列表的客户端
@@ -221,9 +216,6 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             updateById(room);
 
             Map<String, Object> statusMessage = new HashMap<>();
-//            statusMessage.put("roomId", roomId);
-//            statusMessage.put("status", "ONGOING");
-//            statusMessage.put("startedAt", room.getStartedAt());
             statusMessage.put("eventType", "ROOM_UPDATED");
             statusMessage.put("room", room);
 
@@ -241,9 +233,6 @@ public class InterviewRoomServiceImpl extends ServiceImpl<InterviewRoomMapper, I
             updateById(room);
 
             Map<String, Object> statusMessage = new HashMap<>();
-//            statusMessage.put("roomId", roomId);
-//            statusMessage.put("status", "COMPLETED");
-//            statusMessage.put("endedAt", room.getEndedAt());
             statusMessage.put("eventType", "ROOM_UPDATED");
             statusMessage.put("room", room);
 
