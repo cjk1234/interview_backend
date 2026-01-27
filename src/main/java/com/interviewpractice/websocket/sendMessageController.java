@@ -31,7 +31,6 @@ public class sendMessageController {
     public void sendMessage(@RequestBody MessageDTO messageDTO) {
         // 广播消息给房间内所有用户
         messagingTemplate.convertAndSend("/topic/message/" + messageDTO.getRoomId(), messageDTO);
-
         String type = messageDTO.getMessageType();
         if (type == null || !SIGNAL_TYPES.contains(type)) {
             messageService.sendMessage(messageDTO);
