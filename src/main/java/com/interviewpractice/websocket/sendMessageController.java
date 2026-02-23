@@ -8,7 +8,6 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,7 +31,7 @@ public class sendMessageController {
             // 假设前端订阅的个人信令地址为 /queue/signaling/{userId}
             if (messageDTO.getToUserId() != null) {
                 messagingTemplate.convertAndSend(
-                        "/queue/signaling" + messageDTO.getToUserId(),
+                        "/queue/signaling/" + messageDTO.getToUserId(),
                         messageDTO
                 );
             }
