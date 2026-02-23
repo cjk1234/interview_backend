@@ -32,7 +32,7 @@ public class sendMessageController {
             // 假设前端订阅的个人信令地址为 /queue/signaling/{userId}
             if (messageDTO.getToUserId() != null) {
                 messagingTemplate.convertAndSend(
-                        "queue/signaling" + messageDTO.getToUserId(),
+                        "/queue/signaling" + messageDTO.getToUserId(),
                         messageDTO
                 );
             }
