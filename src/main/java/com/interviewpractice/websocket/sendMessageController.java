@@ -3,6 +3,7 @@ package com.interviewpractice.websocket;
 import com.interviewpractice.dto.*;
 import com.interviewpractice.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -20,20 +21,26 @@ public class sendMessageController {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
-
-    private static final Set<String> SIGNAL_TYPES = new HashSet<>(Arrays.asList(
-            "OFFER", "ANSWER", "CANDIDATE", "VIDEO_STATUS"
-    ));
     /**
-     * 处理聊天消息
+     * 处理聊天消息及信令消息
      */
     @MessageMapping("/chat/{roomId}")
     public void sendMessage(@RequestBody MessageDTO messageDTO) {
-        // 广播消息给房间内所有用户
-        messagingTemplate.convertAndSend("/topic/message/" + messageDTO.getRoomId(), messageDTO);
-        String type = messageDTO.getMessageType();
-        if (type == null || !SIGNAL_TYPES.contains(type)) {
-            messageService.sendMessage(messageDTO);
+        // 判断是否为WebRTC信令消息
+        if ("SIGNALING".equals(messageDTO.getMessageType())) {
+            // 信令消息只需转发给目标用户 (toUserId)
+            // 假设前端订阅的个人信令地址为 /queue/signaling/{userId}
+            if (messageDTO.getToUserId() != null) {
+                messagingTemplate.convertAndSend(
+                        "queue/signaling" + messageDTO.getToUserId(),
+                        messageDTO
+                );
+            }
+        } else {
+            messagingTemplate.convertAndSend("/topic/message/" + messageDTO.getRoomId(), messageDTO);
+            if ("TEXT".equals(messageDTO.getMessageType())) {
+                messageService.sendMessage(messageDTO);
+            }
         }
     }
 }
