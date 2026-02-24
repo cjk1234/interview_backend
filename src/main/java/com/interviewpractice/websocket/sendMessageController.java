@@ -3,14 +3,10 @@ package com.interviewpractice.websocket;
 import com.interviewpractice.dto.*;
 import com.interviewpractice.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 @Controller
 public class sendMessageController {
