@@ -1,6 +1,5 @@
 package com.interviewpractice.service.impl;
 
-
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.interviewpractice.dto.LoginDTO;
 import com.interviewpractice.dto.UserDTO;
@@ -10,7 +9,7 @@ import com.interviewpractice.service.UserService;
 import com.interviewpractice.utils.JwtUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,7 +20,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private JwtUtil jwtUtil;
 
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public User register(UserDTO userDTO) {
@@ -31,8 +30,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 检查邮箱是否已存在
-        if (lambdaQuery().eq(User::getEmail, userDTO.getEmail()).count() > 0) {
-            throw new RuntimeException("邮箱已存在");
+        if (userDTO.getEmail() != null && !userDTO.getEmail().isEmpty()) {
+            if (lambdaQuery().eq(User::getEmail, userDTO.getEmail()).count() > 0) {
+                throw new RuntimeException("邮箱已存在");
+            }
         }
 
         User user = new User();
@@ -67,7 +68,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new RuntimeException("用户不存在");
         }
 
-        BeanUtils.copyProperties(userDTO, user);
+        // Only update non-null fields
+        if (userDTO.getUsername() != null) user.setUsername(userDTO.getUsername());
+        if (userDTO.getEmail() != null) user.setEmail(userDTO.getEmail());
+        if (userDTO.getSchool() != null) user.setSchool(userDTO.getSchool());
+        if (userDTO.getMajor() != null) user.setMajor(userDTO.getMajor());
+        if (userDTO.getGrade() != null) user.setGrade(userDTO.getGrade());
+        if (userDTO.getAvatarUrl() != null) user.setAvatarUrl(userDTO.getAvatarUrl());
+        if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        }
         user.setUpdatedAt(LocalDateTime.now());
         updateById(user);
 
